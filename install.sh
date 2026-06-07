@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MARKETPLACE_SOURCE="${REPHRASY_SKILLS_MARKETPLACE_SOURCE:-jhubbardsf/rephrasy-skills}"
-MARKETPLACE_NAME="${REPHRASY_SKILLS_MARKETPLACE_NAME:-rephrasy-skills}"
+MARKETPLACE_SOURCE="${REPHRASY_SKILLS_MARKETPLACE_SOURCE:-jhubbardsf/claude-plugins}"
+MARKETPLACE_NAME="${REPHRASY_SKILLS_MARKETPLACE_NAME:-joshd3v}"
 PLUGIN_SPEC="${REPHRASY_SKILLS_PLUGIN_SPEC:-rephrasy@$MARKETPLACE_NAME}"
 SCOPE="${REPHRASY_SKILLS_INSTALL_SCOPE:-user}"
 
@@ -12,9 +12,9 @@ Usage:
   install.sh [--scope user|project|local]
 
 Environment overrides:
-  REPHRASY_SKILLS_MARKETPLACE_SOURCE  Marketplace source. Default: jhubbardsf/rephrasy-skills
-  REPHRASY_SKILLS_MARKETPLACE_NAME    Marketplace name. Default: rephrasy-skills
-  REPHRASY_SKILLS_PLUGIN_SPEC         Plugin spec. Default: rephrasy@rephrasy-skills
+  REPHRASY_SKILLS_MARKETPLACE_SOURCE  Marketplace source. Default: jhubbardsf/claude-plugins
+  REPHRASY_SKILLS_MARKETPLACE_NAME    Marketplace name. Default: joshd3v
+  REPHRASY_SKILLS_PLUGIN_SPEC         Plugin spec. Default: rephrasy@joshd3v
   REPHRASY_SKILLS_INSTALL_SCOPE       Install scope. Default: user
 USAGE
 }

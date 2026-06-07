@@ -11,10 +11,12 @@ Score text for AI detectability and humanize AI-generated text, without leaving 
 From inside Claude Code:
 
 ```text
-/plugin marketplace add jhubbardsf/rephrasy-skills
-/plugin install rephrasy@rephrasy-skills
+/plugin marketplace add jhubbardsf/claude-plugins
+/plugin install rephrasy@joshd3v
 /reload-plugins
 ```
+
+`joshd3v` is [Josh Hubbard's umbrella marketplace](https://github.com/jhubbardsf/claude-plugins) covering all of his plugins, so one marketplace add gives you this plugin and the rest.
 
 Then run:
 
@@ -23,7 +25,15 @@ Then run:
 /rephrasy:humanize <file-or-text>
 ```
 
-Claude Code plugin install specs use `plugin@marketplace`. Here, `rephrasy` is the plugin name and `rephrasy-skills` is the marketplace name from `.claude-plugin/marketplace.json`. Plugin skills are namespaced by plugin name.
+**Direct repo install** (alternative — this repo also embeds its own standalone marketplace):
+
+```text
+/plugin marketplace add jhubbardsf/rephrasy-skills
+/plugin install rephrasy@rephrasy-skills
+/reload-plugins
+```
+
+Claude Code plugin install specs use `plugin@marketplace`. Here, `rephrasy` is the plugin name, `joshd3v` is the umbrella marketplace, and `rephrasy-skills` is this repo's standalone marketplace from `.claude-plugin/marketplace.json`. Plugin skills are namespaced by plugin name, so the invocations are identical either way.
 
 ### One-line installer
 

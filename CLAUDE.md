@@ -23,7 +23,10 @@ Claude Code plugin marketplace wrapping the Rephrasy AI-detector and humanizer A
 ## Publishing
 
 - Marketplace manifest: `.claude-plugin/marketplace.json` (marketplace `rephrasy-skills`); plugin manifest: `plugins/rephrasy/.claude-plugin/plugin.json`. Bump `version` in plugin.json on user-facing changes.
-- Install flow users follow: `/plugin marketplace add jhubbardsf/rephrasy-skills` → `/plugin install rephrasy@rephrasy-skills`. `install.sh` automates this via the `claude` CLI.
+- Install flow users follow — two paths:
+  - **Umbrella (primary)**: `/plugin marketplace add jhubbardsf/claude-plugins` → `/plugin install rephrasy@joshd3v`. The umbrella manifest lives in `jhubbardsf/claude-plugins` and references this repo via a git-subdir source at `plugins/rephrasy`.
+  - **Direct**: `/plugin marketplace add jhubbardsf/rephrasy-skills` → `/plugin install rephrasy@rephrasy-skills` (this repo's embedded marketplace). `install.sh` automates the umbrella path via the `claude` CLI; env overrides switch it back to direct.
+- New plugins Josh releases get a one-entry addition in the umbrella repo's `marketplace.json` — no changes needed in the plugin repos themselves.
 - GitHub Pages serves `docs/index.html` from `/docs` on `main`.
 - Validate before pushing: `claude plugin validate .` (if available) plus `python3 -m py_compile plugins/rephrasy/scripts/*.py`.
 
