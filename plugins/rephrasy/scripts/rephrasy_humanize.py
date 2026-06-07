@@ -129,7 +129,10 @@ def write_atomic(path, content):
     """Write via a same-directory temp file + os.replace so a failed write
     never truncates an existing file (matters for --in-place)."""
     directory = os.path.dirname(os.path.abspath(path))
-    fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=".rephrasy-")
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=".rephrasy-")
+    except OSError as exc:
+        die(f"error: cannot write {path}: {exc}")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(content)

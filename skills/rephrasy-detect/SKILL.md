@@ -1,7 +1,7 @@
 ---
 name: rephrasy-detect
 description: Check whether text is AI-detectable using the Rephrasy Detector API. Use when (1) the user asks if text "sounds AI", "is AI-detectable", or wants an AI-detection score, (2) verifying humanized output before delivery, (3) a slash command like /ai-detect delegates to it. Scores 0 (human) to 100 (AI) with per-sentence breakdown. Requires REPHRASY_API_KEY (already in env / ~/.config/zsh/secrets.zsh). Costs API credits per call.
-argument-hint: "<file-or-text> [--mode depth|default] [--json] [--threshold N]"
+argument-hint: "<file-or-text> [--mode depth|default] [--json] [--threshold N] [--top K]"
 allowed-tools:
   - Read
   - Bash(python3 *)
