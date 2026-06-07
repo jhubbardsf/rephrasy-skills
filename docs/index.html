@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rephrasy-skills - AI detection and humanization for Claude Code</title>
+  <meta name="description" content="A Claude Code plugin that scores text for AI detectability and humanizes it via the Rephrasy API.">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #090909;
+      --surface: #141414;
+      --surface-2: #1b1b1b;
+      --border: #2a2a2a;
+      --text: #f8fafc;
+      --muted: #a3a3a3;
+      --soft: #737373;
+      --accent: #14b8a6;
+      --accent-hover: #2dd4bf;
+      --green: #22c55e;
+      --blue: #60a5fa;
+      --red: #ef4444;
+      --code: #111111;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(9, 9, 9, 0.92);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      gap: 20px;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0;
+      font-size: 18px;
+    }
+
+    .brand span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .hero {
+      padding: 64px 0 44px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+      gap: 44px;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero > * { min-width: 0; }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4.25rem);
+      line-height: 1.02;
+      font-weight: 800;
+      letter-spacing: 0;
+      margin-bottom: 20px;
+    }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 1.17rem;
+      max-width: 620px;
+      margin-bottom: 30px;
+    }
+
+    .tagline code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.88em;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      white-space: nowrap;
+    }
+
+    .install-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      max-width: 680px;
+      width: 100%;
+    }
+
+    .install-box code {
+      color: var(--text);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: nowrap;
+      display: block;
+      min-width: 0;
+    }
+
+    .copy-btn, .btn {
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-family: Inter, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 14px;
+      white-space: nowrap;
+      transition: background 0.16s ease, transform 0.16s ease;
+    }
+
+    .copy-btn:hover, .btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .copy-btn.copied { background: var(--green); }
+
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn.secondary:hover {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .terminal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+      min-width: 0;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 16px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .dot.red { background: #ff5f57; }
+    .dot.yellow { background: #febc2e; }
+    .dot.green { background: #28c840; }
+
+    .terminal-title {
+      margin-left: 8px;
+      color: var(--soft);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+
+    .terminal-body {
+      padding: 20px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      overflow-x: auto;
+      min-width: 0;
+    }
+
+    .prompt { color: var(--accent); }
+    .out { color: var(--muted); }
+    .ok { color: var(--green); }
+    .path { color: var(--blue); }
+    .warn { color: #facc15; }
+    .flag { color: var(--red); }
+
+    section {
+      padding: 56px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: clamp(1.7rem, 4vw, 2.4rem);
+      line-height: 1.14;
+      margin-bottom: 14px;
+      letter-spacing: 0;
+    }
+
+    .section-copy {
+      color: var(--muted);
+      max-width: 700px;
+      margin-bottom: 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .feature {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px;
+    }
+
+    .feature h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .feature p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .usage-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .code-panel {
+      background: var(--code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      min-width: 0;
+    }
+
+    .code-panel pre {
+      color: var(--muted);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    footer {
+      padding: 34px 0 44px;
+      color: var(--soft);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--text);
+      text-decoration: underline;
+      text-decoration-color: var(--border);
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      color: var(--soft);
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 42px;
+      }
+
+      .grid, .usage-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links {
+        display: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .container {
+        width: min(100% - 28px, 1120px);
+      }
+
+      .install-box {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .copy-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <a class="brand" href="#">rephrasy<span>-skills</span></a>
+        <div class="nav-links">
+          <a href="#install">Install</a>
+          <a href="#features">Features</a>
+          <a href="#usage">Usage</a>
+          <a href="https://github.com/jhubbardsf/rephrasy-skills">GitHub</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container hero">
+      <div>
+        <p class="eyebrow">Claude Code plugin</p>
+        <h1>AI detection and humanization for Claude Code.</h1>
+        <p class="tagline">Two skills backed by the Rephrasy API: <code>/rephrasy:ai-detect</code> scores any text 0 (human) to 100 (AI) with a per-sentence breakdown, and <code>/rephrasy:humanize</code> rewrites AI-generated text to read as human. Defaults to Rephrasy's v3 model with professional style.</p>
+
+        <div id="install" class="install-box">
+          <code id="installCommand">/plugin marketplace add jhubbardsf/rephrasy-skills</code>
+          <button class="copy-btn" onclick="copyInstall()">Copy</button>
+        </div>
+
+        <div class="actions">
+          <a class="btn" href="https://github.com/jhubbardsf/rephrasy-skills">View on GitHub</a>
+          <a class="btn secondary" href="https://github.com/jhubbardsf/rephrasy-skills#usage">Read the docs</a>
+        </div>
+      </div>
+
+      <div class="terminal" aria-label="Rephrasy AI detection terminal preview">
+        <div class="terminal-header">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="terminal-title">Claude Code</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="prompt">/rephrasy:ai-detect</span> <span class="path">draft.md</span></div>
+          <div class="out">Overall AI score: <span class="flag">100.00</span> / 100&nbsp;&nbsp;(0 = human, 100 = AI)</div>
+          <div class="out">Verdict: <span class="flag">flagged as AI</span></div>
+          <div class="out">Words: 41 | Sentences scored: 3</div>
+          <br>
+          <div class="ok">Most AI-flagged sentences (top 3):</div>
+          <div class="out">&nbsp;&nbsp;&nbsp;<span class="warn">99.96</span>&nbsp;&nbsp;In conclusion, organizations must adapt...</div>
+          <div class="out">&nbsp;&nbsp;&nbsp;<span class="warn">95.81</span>&nbsp;&nbsp;The rapid advancement of artificial intelligence...</div>
+          <div class="out">&nbsp;&nbsp;&nbsp;<span class="warn">95.04</span>&nbsp;&nbsp;Moreover, it is important to note that...</div>
+        </div>
+      </div>
+    </div>
+
+    <section id="quickstart">
+      <div class="container">
+        <h2 class="section-title">Quick start</h2>
+        <p class="section-copy">Add the marketplace, install the plugin, reload. Requires Claude Code with plugin support, python3 (the scripts are stdlib-only, zero pip dependencies), and a <strong>REPHRASY_API_KEY</strong> env var from rephrasy.ai (paid API).</p>
+
+        <div class="usage-grid">
+          <div class="code-panel">
+            <pre><span class="prompt"># Install</span>
+/plugin marketplace add jhubbardsf/rephrasy-skills
+/plugin install rephrasy@rephrasy-skills
+/reload-plugins
+
+<span class="prompt"># Invoke</span>
+/rephrasy:ai-detect &lt;file&gt;
+/rephrasy:humanize &lt;file&gt;</pre>
+          </div>
+          <div class="code-panel">
+            <pre><span class="prompt"># One-line installer</span>
+curl -fsSL https://raw.githubusercontent.com/jhubbardsf/rephrasy-skills/main/install.sh | bash
+
+<span class="prompt"># Requires</span>
+# Claude Code with plugin support
+# python3 (stdlib-only, zero pip dependencies)
+# REPHRASY_API_KEY from rephrasy.ai (paid API)</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <h2 class="section-title">Built against the live API, not the docs</h2>
+        <p class="section-copy">Detection that shows its work, humanization with control, and verdicts calibrated from real API responses.</p>
+
+        <div class="grid">
+          <div class="feature">
+            <h3>Per-sentence detection</h3>
+            <p>Depth-mode scoring shows exactly which sentences read as AI, so rewrites target the right lines.</p>
+          </div>
+          <div class="feature">
+            <h3>Humanize with control</h3>
+            <p>Rephrasy v3 model with professional style by default; creative/journalistic/no-style and other models one flag away.</p>
+          </div>
+          <div class="feature">
+            <h3>Calibrated verdicts</h3>
+            <p>Score bands calibrated against live API data, including the fact that formal human prose scores 60&ndash;75 on this detector (a verified-human sample scored 70.28; casual human text 7.35).</p>
+          </div>
+          <div class="feature">
+            <h3>Iterate until it passes</h3>
+            <p>Built-in loop workflow: humanize &rarr; score &rarr; repeat (max 3 passes), keeps the best-scoring version, never burns paid passes on API outages thanks to a strict exit-code contract (0 ok / 1 over threshold / 2 error).</p>
+          </div>
+          <div class="feature">
+            <h3>Zero dependencies</h3>
+            <p>Stdlib-only Python helpers; no pip install, no node_modules. Atomic file writes, clean one-line errors, costs surfaced after every call.</p>
+          </div>
+          <div class="feature">
+            <h3>Docs-vs-reality tested</h3>
+            <p>Behavior encoded from live API verification, not the marketing docs (e.g. score direction is 0=human/100=AI in every mode, despite docs claiming otherwise; invalid keys actually return HTTP 400).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="usage">
+      <div class="container">
+        <h2 class="section-title">Usage examples</h2>
+        <p class="section-copy">Point either skill at a file or paste prose inline. Humanized output lands next to the input.</p>
+
+        <div class="code-panel">
+          <pre>/rephrasy:ai-detect draft.md
+/rephrasy:ai-detect "paste some prose here"
+/rephrasy:humanize draft.md            <span class="prompt"># -&gt; draft_rephrasy.md</span>
+/rephrasy:humanize draft.md --verify   <span class="prompt"># re-score the result</span>
+/rephrasy:humanize draft.md --iterate --threshold 40
+/rephrasy:humanize draft.md --style creative</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <a href="https://github.com/jhubbardsf/rephrasy-skills">GitHub</a> · <a href="https://www.rephrasy.ai/api-solution">Rephrasy API</a> · <a href="https://joshuahubbard.dev">joshuahubbard.dev</a> · MIT License
+      <div class="footer-note">Not affiliated with Rephrasy — an independent client.</div>
+    </div>
+  </footer>
+
+  <script>
+    async function copyInstall() {
+      const command = document.getElementById("installCommand").textContent;
+      const button = document.querySelector(".copy-btn");
+      try {
+        await navigator.clipboard.writeText(command);
+        button.textContent = "Copied";
+        button.classList.add("copied");
+        setTimeout(() => {
+          button.textContent = "Copy";
+          button.classList.remove("copied");
+        }, 1800);
+      } catch {
+        button.textContent = "Copy failed";
+      }
+    }
+  </script>
+</body>
+</html>

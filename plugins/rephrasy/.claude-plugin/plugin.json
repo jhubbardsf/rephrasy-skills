@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "rephrasy",
+  "version": "0.1.0",
+  "description": "Score text for AI detectability and humanize AI-generated text via the Rephrasy API.",
+  "author": {
+    "name": "Josh Hubbard",
+    "email": "josh@joshuahubbard.dev",
+    "url": "https://github.com/jhubbardsf"
+  },
+  "homepage": "https://jhubbardsf.github.io/rephrasy-skills/",
+  "repository": "https://github.com/jhubbardsf/rephrasy-skills",
+  "license": "MIT",
+  "keywords": ["rephrasy", "ai-detection", "humanizer", "gptzero", "writing", "claude-code"]
+}

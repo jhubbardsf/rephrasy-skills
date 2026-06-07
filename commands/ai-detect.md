@@ -15,7 +15,7 @@ allowed-tools:
 
 # /ai-detect — score text for AI detectability (Rephrasy)
 
-Invoke the `rephrasy-detect` skill with the arguments below. The skill drives the stdlib-only helper at `/Users/josh/Engineering/rephrasy-api-skills/scripts/rephrasy_detect.py`.
+Invoke the `rephrasy-detect` skill with the arguments below. The skill drives the stdlib-only helper at `/Users/josh/Engineering/rephrasy-api-skills/plugins/rephrasy/scripts/rephrasy_detect.py`.
 
 Arguments: `$ARGUMENTS`
 

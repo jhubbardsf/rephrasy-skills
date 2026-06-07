@@ -1,0 +1,23 @@
+{
+  "name": "rephrasy-skills",
+  "owner": {
+    "name": "Josh Hubbard",
+    "email": "josh@joshuahubbard.dev"
+  },
+  "description": "Claude Code plugin for AI-detection scoring and text humanization via the Rephrasy API.",
+  "plugins": [
+    {
+      "name": "rephrasy",
+      "source": "./plugins/rephrasy",
+      "description": "Score text for AI detectability and humanize AI-generated text via the Rephrasy API.",
+      "author": {
+        "name": "Josh Hubbard"
+      },
+      "homepage": "https://jhubbardsf.github.io/rephrasy-skills/",
+      "repository": "https://github.com/jhubbardsf/rephrasy-skills",
+      "license": "MIT",
+      "category": "writing",
+      "tags": ["rephrasy", "ai-detection", "humanizer", "gptzero", "writing", "claude-code"]
+    }
+  ]
+}

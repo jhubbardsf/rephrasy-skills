@@ -18,7 +18,7 @@ allowed-tools:
 
 # /rephrasy-humanize — humanize text via the Rephrasy API
 
-Invoke the `rephrasy-humanize` skill with the arguments below. The skill drives the stdlib-only helper at `/Users/josh/Engineering/rephrasy-api-skills/scripts/rephrasy_humanize.py`.
+Invoke the `rephrasy-humanize` skill with the arguments below. The skill drives the stdlib-only helper at `/Users/josh/Engineering/rephrasy-api-skills/plugins/rephrasy/scripts/rephrasy_humanize.py`.
 
 Arguments: `$ARGUMENTS`
 

@@ -1,7 +1,7 @@
 ---
-name: rephrasy-detect
-description: Check whether text is AI-detectable using the Rephrasy Detector API. Use when (1) the user asks if text "sounds AI", "is AI-detectable", or wants an AI-detection score, (2) verifying humanized output before delivery, (3) a slash command like /ai-detect delegates to it. Scores 0 (human) to 100 (AI) with per-sentence breakdown. Requires REPHRASY_API_KEY (already in env / ~/.config/zsh/secrets.zsh). Costs API credits per call.
-argument-hint: "<file-or-text> [--mode depth|default] [--json] [--threshold N]"
+name: ai-detect
+description: Check whether text is AI-detectable using the Rephrasy Detector API. Use when (1) the user asks if text "sounds AI", "is AI-detectable", or wants an AI-detection score, (2) verifying humanized output before delivery. Scores 0 (human) to 100 (AI) with per-sentence breakdown. Requires the REPHRASY_API_KEY environment variable. Costs API credits per call.
+argument-hint: "<file-or-text> [--mode depth|default] [--json] [--threshold N] [--top K]"
 allowed-tools:
   - Read
   - Bash(python3 *)
@@ -14,14 +14,14 @@ allowed-tools:
   - Bash(wc *)
 ---
 
-# rephrasy-detect — score text for AI detectability
+# ai-detect — score text for AI detectability
 
-Drives the Rephrasy Detector API (`https://detector.rephrasy.ai/detect_api`) through a stdlib-only Python helper. No pip installs needed.
+Drives the Rephrasy Detector API (`https://detector.rephrasy.ai/detect_api`) through a stdlib-only Python helper bundled with this plugin. No pip installs needed.
 
 ## Helper script
 
 ```bash
-DETECT=/Users/josh/Engineering/rephrasy-api-skills/plugins/rephrasy/scripts/rephrasy_detect.py
+DETECT="${CLAUDE_PLUGIN_ROOT}/scripts/rephrasy_detect.py"
 
 python3 "$DETECT" path/to/file.txt              # score a file (depth mode, default)
 python3 "$DETECT" --text "literal text here"    # score a string
@@ -31,7 +31,7 @@ python3 "$DETECT" file.txt --threshold 40       # exit 1 if overall > 40 (for lo
 python3 "$DETECT" file.txt --top 10             # show 10 most AI-flagged sentences
 ```
 
-The script resolves `REPHRASY_API_KEY` from the environment, falling back to `~/.config/zsh/secrets.zsh`. If both are missing it exits with a clear error — do not paste the key on the command line.
+The script requires the `REPHRASY_API_KEY` environment variable (get a key at https://www.rephrasy.ai). If missing it exits with a clear error — never paste the key on the command line.
 
 Exit codes: **0** = success (and under threshold, if given), **1** = score exceeded `--threshold`, **2** = any error (bad input, missing key, API/network failure). Loops can therefore tell "score too high" apart from "API is down" — never treat exit 2 as a scoring result.
 
@@ -42,7 +42,7 @@ The detector API returns no cost field (only the humanizer does), but detector c
 1. If given a file path, confirm it exists; if given prose in the conversation, pass it with `--text` (or write a temp file for long text).
 2. Run the helper. Default mode is `depth` — it returns finer-grained per-sentence scores than the default mode at the same cost (verified live: default mode rounds sentence scores to flat values).
 3. Report to the user: the overall score, the verdict, and the most AI-flagged sentences (these are the rewrite targets).
-4. If the user wants the text fixed, hand off to the `rephrasy-humanize` skill.
+4. If the user wants the text fixed, hand off to the `humanize` skill in this plugin.
 
 ## Interpreting scores — IMPORTANT
 

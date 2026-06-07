@@ -1,103 +1,136 @@
-# rephrasy-api-skills
+# rephrasy-skills
 
-Claude Code skills and slash commands for the [Rephrasy](https://www.rephrasy.ai/api-solution) AI-detection and humanizer APIs. Repo is the single source of truth; the global `~/.claude` entries are symlinks into it.
+Score text for AI detectability and humanize AI-generated text, without leaving Claude Code.
 
-## What's here
+`rephrasy-skills` packages two Claude Code skills backed by the [Rephrasy API](https://www.rephrasy.ai/api-solution): `/rephrasy:ai-detect` scores any text 0 (human) to 100 (AI) with a per-sentence breakdown, and `/rephrasy:humanize` rewrites AI-flavored text to read as human (Rephrasy's v3 model with the professional style by default). The skills encode live-verified API behavior — including the places where the API's real behavior diverges from its public docs.
 
-| Path | What it is |
-|---|---|
-| `scripts/rephrasy_detect.py` | Stdlib-only Python CLI for the Detector API |
-| `scripts/rephrasy_humanize.py` | Stdlib-only Python CLI for the Humanizer API |
-| `skills/rephrasy-detect/` | Skill: score text 0 (human) – 100 (AI) with per-sentence breakdown |
-| `skills/rephrasy-humanize/` | Skill: rewrite AI text to read human (v3 + professional defaults) |
-| `commands/ai-detect.md` | `/ai-detect` slash command → rephrasy-detect skill |
-| `commands/rephrasy-humanize.md` | `/rephrasy-humanize` slash command → rephrasy-humanize skill |
+## Installation
 
-Installed via symlinks:
+### Claude Code plugin
 
-```
-~/.claude/skills/rephrasy-detect      -> skills/rephrasy-detect
-~/.claude/skills/rephrasy-humanize    -> skills/rephrasy-humanize
-~/.claude/commands/ai-detect.md       -> commands/ai-detect.md
-~/.claude/commands/rephrasy-humanize.md -> commands/rephrasy-humanize.md
+From inside Claude Code:
+
+```text
+/plugin marketplace add jhubbardsf/rephrasy-skills
+/plugin install rephrasy@rephrasy-skills
+/reload-plugins
 ```
 
-## Auth
+Then run:
 
-`REPHRASY_API_KEY` — read from the environment, falling back to `~/.config/zsh/secrets.zsh`. Never passed on the command line, never logged.
+```text
+/rephrasy:ai-detect <file-or-text>
+/rephrasy:humanize <file-or-text>
+```
+
+Claude Code plugin install specs use `plugin@marketplace`. Here, `rephrasy` is the plugin name and `rephrasy-skills` is the marketplace name from `.claude-plugin/marketplace.json`. Plugin skills are namespaced by plugin name.
+
+### One-line installer
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jhubbardsf/rephrasy-skills/main/install.sh | bash
+```
+
+To install at project or local scope:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jhubbardsf/rephrasy-skills/main/install.sh | bash -s -- --scope project
+```
+
+## Requirements
+
+- Claude Code with plugin support
+- `python3` (the bundled helpers are stdlib-only — zero pip dependencies)
+- A `REPHRASY_API_KEY` environment variable ([get a key](https://www.rephrasy.ai) — this is a paid API; every call costs credits)
 
 ## Usage
 
-In any Claude Code session:
-
+```text
+/rephrasy:ai-detect draft.md
+/rephrasy:ai-detect "paste some prose here"
+/rephrasy:humanize draft.md                       # -> draft_rephrasy.md next to the input
+/rephrasy:humanize draft.md --verify              # re-score the result with the detector
+/rephrasy:humanize draft.md --iterate --threshold 40
+/rephrasy:humanize draft.md --style creative      # override the professional default
+/rephrasy:humanize draft.md --model "Undetectable Model v2"
 ```
-/ai-detect draft.md
-/ai-detect "paste some prose here"
-/rephrasy-humanize draft.md
-/rephrasy-humanize draft.md --verify
-/rephrasy-humanize draft.md --iterate --threshold 40
-/rephrasy-humanize draft.md --style creative
-```
 
-Directly from a shell:
+The humanize skill defaults to **model `v3` + style `professional`** and never overwrites the input unless `--in-place` is passed explicitly. `--iterate` re-humanizes up to 3 passes, keeps the best-scoring version, and aborts (rather than burning paid passes) if the API errors.
+
+## Helper CLIs
+
+The plugin bundles two stdlib-only Python scripts that also work standalone from any shell:
 
 ```bash
-# Detect (depth mode default: per-sentence scores)
-python3 scripts/rephrasy_detect.py draft.md
-python3 scripts/rephrasy_detect.py --text "some text"
-cat draft.md | python3 scripts/rephrasy_detect.py -
-python3 scripts/rephrasy_detect.py draft.md --threshold 40 && echo "passes"
-
-# Humanize (defaults: model v3, style professional)
-python3 scripts/rephrasy_humanize.py draft.md            # -> draft_rephrasy.md
-python3 scripts/rephrasy_humanize.py draft.md --in-place # atomic overwrite
-python3 scripts/rephrasy_humanize.py --text "some text"  # -> stdout (-o FILE also works)
-python3 scripts/rephrasy_humanize.py draft.md --no-style # v3 built-in behavior, ~3x cheaper
+python3 plugins/rephrasy/scripts/rephrasy_detect.py FILE [--mode depth|default] [--json] [--threshold N] [--top K]
+python3 plugins/rephrasy/scripts/rephrasy_humanize.py FILE [-o OUT] [--in-place] [--style STYLE] [--no-style] [--model MODEL] [--language NAME] [--json]
 ```
 
-### Python API examples (for embedding elsewhere)
+Both accept a file path, `-` for stdin, or `--text "literal text"`.
 
-```python
-import json, os, urllib.request
-
-KEY = os.environ["REPHRASY_API_KEY"]
-
-def rephrasy(url, body):
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode(),
-        headers={"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=300) as r:
-        return json.load(r)
-
-# Detect: 0 = human, 100 = AI (both modes -- the public docs are wrong about inversion)
-scores = rephrasy("https://detector.rephrasy.ai/detect_api",
-                  {"text": "...", "mode": "depth"})
-print(scores["scores"]["overall"], scores["sentences"])
-
-# Humanize: v3 + professional defaults
-out = rephrasy("https://v2-humanizer.rephrasy.ai/api/",
-               {"text": "...", "model": "v3", "style": "professional",
-                "words": True, "costs": True})
-print(out["output"], out["new_flesch_score"], out["costs"])
-```
+| Behavior | Detail |
+| --- | --- |
+| Exit codes | `0` success · `1` over `--threshold` (detect only) · `2` any error — loops can distinguish "score too high" from "API is down" |
+| Output naming | `foo.txt` → `foo_rephrasy.txt` (non-destructive by default); `--in-place` writes atomically via temp file + rename |
+| Cost reporting | The humanizer prints `cost=… credits` to stderr after every call, including `--json` runs |
+| Errors | Clean one-line `error: …` messages — no tracebacks, including response-phase timeouts and non-JSON 200 bodies |
 
 ## API facts verified live (2026-06-07)
 
-These differ from or go beyond the public docs:
+These differ from, or go beyond, Rephrasy's public docs — the skills encode the observed behavior:
 
 - **Detector direction**: 0 = human, 100 = AI in **both** default and depth mode. The docs claim non-depth modes are inverted; they are not.
-- Default mode also returns per-sentence scores, just coarser than `depth`. Use `depth`.
-- Humanizer `costs` is a plain number of credits, not `{"total": ...}`.
+- Default mode also returns per-sentence scores, just coarser than `depth`. The skills always use `depth`.
+- **The detector runs hot on formal prose**: a verified-human (GPTZero 100%) formal sample scored **70.28**; casual human text scored **7.35**. The skills' verdict bands account for this.
+- Humanizer `costs` is a plain number of credits, not the `{"total": ...}` object shown in the docs.
 - `new_flesch_score` can be negative for dense prose.
-- The detector runs hot on formal prose: a verified-human (GPTZero 100%) formal sample scored **70.28**; casual human text scored **7.35**.
-- `style: "professional"` costs ~3x a no-style call and yields more formal (hence more Rephrasy-detectable) output. GPTZero is the usual real target, so this is an accepted trade-off.
+- An invalid key returns **HTTP 400** `{"error":"Invalid API Key"}`, not the documented 401 (both are handled).
+- `style: "professional"` costs ~3x a no-style call and yields more formal (hence more Rephrasy-detectable) output. It stays the default because GPTZero — not Rephrasy's own detector — is the usual real target.
 
-## Cost model
+## Configuration
 
-Word-based pricing is enabled by default (`words: true`). The marketing page quotes "0.1 credits flat + 0.1 per 100 words", but measured charges run far lower (0.000726–0.002178 credits for a 41-word humanize call) — trust the per-call `cost=` line the humanize script prints to stderr, not the formula. The detector API returns no cost field, but detector calls still bill credits. Skills are instructed to surface costs to the user.
+```bash
+export REPHRASY_API_KEY=...   # required
+```
 
-## Exit codes
+Everything else is per-invocation flags. The humanize defaults (v3 + professional) are set in the skill and overridable with `--model` / `--style` / `--no-style`.
 
-Both scripts: `0` = success, `2` = any error (bad input/flags, missing key, API or network failure — clean one-line messages, no tracebacks). The detect script additionally exits `1` when `--threshold N` is given and the score exceeds N, so loops can distinguish "score too high" (1) from "API is down" (2).
+## Repository layout
+
+```
+.claude-plugin/marketplace.json     # marketplace manifest (name: rephrasy-skills)
+plugins/rephrasy/                   # the plugin (name: rephrasy)
+├── .claude-plugin/plugin.json
+├── scripts/                        # stdlib-only Python helpers
+└── skills/
+    ├── ai-detect/SKILL.md
+    └── humanize/SKILL.md
+skills/, commands/                  # author's personal (non-plugin) install; same scripts
+docs/index.html                     # GitHub Pages site
+```
+
+## GitHub Pages
+
+The project site lives in `docs/index.html`. Configure GitHub Pages to serve from `/docs` on the default branch.
+
+## Troubleshooting
+
+### `/plugin` is not recognized
+
+Update Claude Code. Plugin commands require a recent Claude Code release.
+
+### `error: REPHRASY_API_KEY not set`
+
+Export the key in the shell Claude Code runs from, or add it to your shell profile.
+
+### Scores seem high on text a human wrote
+
+Expected — see the calibration table in the `ai-detect` skill. Formal, structured prose scores 60–75 on this detector even when verified human. Read the per-sentence breakdown instead of trusting the single number.
+
+## Disclaimer
+
+Independent client — not affiliated with or endorsed by Rephrasy. API usage is billed to your Rephrasy account.
+
+## License
+
+MIT
